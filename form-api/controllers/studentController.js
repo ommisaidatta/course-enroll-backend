@@ -59,7 +59,7 @@ const registerStudent = async (req, res) => {
 
 const loginStudent = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, rememberMe } = req.body;
 
     if (!email || !password) {
       return res
@@ -77,32 +77,64 @@ const loginStudent = async (req, res) => {
       return res.status(401).json({ message: "Invalid password" });
     }
 
-    const token = jwt.sign(
+    const accessToken = jwt.sign(
       {
         id: student._id,
         email: student.email,
       },
-      JWT_SECRET,
+      process.env.JWT_SECRET,
       { expiresIn: "1h" },
     );
 
-    res.status(200).json({
-      success: true,
-      token,
-      student: {
-        id: student._id,
-        firstname: student.firstname,
-        lastname: student.lastname,
-        email: student.email,
-        phone: student.phone,
-        address: student.address,
-        gender: student.gender,
+    const refreshToken = jwt.sign(
+      { id: student._id },
+      process.env.JWT_REFRESH_SECRET,
+      {
+        // Always keep users logged in for up to 90 days,
+        // actual logout is handled by clearing this cookie.
+        expiresIn: "90d",
       },
+    );
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: false, // for production change to true
+      sameSite: "strict",
+      // Match the JWT expiry: 90 days in milliseconds
+      maxAge: 90 * 24 * 60 * 60 * 1000,
+    });
+
+    res.json({
+      accessToken,
+      student,
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-module.exports = { registerStudent, loginStudent };
+const refreshAccessToken = (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken)
+    return res.status(401).json({ message: "No refresh token" });
+
+  jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, decoded) => {
+    if (err) return res.status(403).json({ message: "Invalid token" });
+
+    const newAccessToken = jwt.sign(
+      { id: decoded.id },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" },
+    );
+
+    res.json({ accessToken: newAccessToken });
+  });
+};
+
+const logout = (req, res) => {
+  res.clearCookie("refreshToken");
+  res.json({ message: "Logged out" });
+};
+
+module.exports = { registerStudent, loginStudent, refreshAccessToken, logout };
