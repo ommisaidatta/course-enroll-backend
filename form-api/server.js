@@ -13,6 +13,7 @@ const lessonRoutes = require("./routes/lessonRoutes");
 const progressRoutes = require("./routes/progressRoutes");
 const reviewRoutes = require("./routes/ratingRoutes");
 const certificateRoutes = require("./routes/certificateRoutes");
+const courseRoutes = require("./routes/courseRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -40,6 +41,7 @@ app.use(express.json());
 app.use("/api/students", studentRoutes);
 
 app.use("/api/admin", adminRoutes);
+app.use("/api/courses", courseRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/enroll", enrollRoutes);
 app.use("/api", profileRoutes);

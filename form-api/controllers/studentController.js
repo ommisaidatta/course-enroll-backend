@@ -1,6 +1,7 @@
 const Student = require("../models/student");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const user = require("../models/student");
 
 const JWT_SECRET =
   process.env.JWT_SECRET ||
@@ -77,10 +78,14 @@ const loginStudent = async (req, res) => {
       return res.status(401).json({ message: "Invalid password" });
     }
 
+    // Ensure role exists, default to "student" for old users
+    const userRole = student.role || "student";
+
     const accessToken = jwt.sign(
       {
         id: student._id,
         email: student.email,
+        role: userRole,
       },
       process.env.JWT_SECRET,
       { expiresIn: "1h" },
@@ -90,46 +95,61 @@ const loginStudent = async (req, res) => {
       { id: student._id },
       process.env.JWT_REFRESH_SECRET,
       {
-        // Always keep users logged in for up to 90 days,
-        // actual logout is handled by clearing this cookie.
         expiresIn: "90d",
       },
     );
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: false, // for production change to true
+      secure: false,
       sameSite: "strict",
-      // Match the JWT expiry: 90 days in milliseconds
       maxAge: 90 * 24 * 60 * 60 * 1000,
     });
 
     res.json({
       accessToken,
-      student,
+      role: userRole,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-const refreshAccessToken = (req, res) => {
+const refreshAccessToken = async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
 
-  if (!refreshToken)
+  if (!refreshToken) {
     return res.status(401).json({ message: "No refresh token" });
+  }
 
-  jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, decoded) => {
-    if (err) return res.status(403).json({ message: "Invalid token" });
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+
+    // 🔥 Fetch user again to get role
+    const student = await Student.findById(decoded.id);
+
+    if (!student) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Ensure role exists, default to "student" for old users
+    const userRole = student.role || "student";
 
     const newAccessToken = jwt.sign(
-      { id: decoded.id },
+      {
+        id: student._id,
+        email: student.email,
+        role: userRole,
+      },
       process.env.JWT_SECRET,
       { expiresIn: "1h" },
     );
 
-    res.json({ accessToken: newAccessToken });
-  });
+    res.json({ accessToken: newAccessToken, role: userRole });
+  } catch (error) {
+    res.status(403).json({ message: "Invalid token" });
+  }
 };
 
 const logout = (req, res) => {

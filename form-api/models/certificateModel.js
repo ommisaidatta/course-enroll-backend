@@ -20,6 +20,10 @@ const certificateSchema = new mongoose.Schema(
       unique: true,
     },
 
+    courseDuration: {
+      type: String,
+    },
+
     issuedDate: {
       type: Date,
       default: Date.now,

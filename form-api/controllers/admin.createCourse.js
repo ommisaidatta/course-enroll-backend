@@ -2,11 +2,11 @@ const Course = require("../models/course");
 
 exports.createCourse = async (req, res) => {
   try {
-    const { title, description, category, duration, level } = req.body;
+    const { title, category, duration, level } = req.body;
 
-    if (!title || !description || !duration) {
+    if (!title || !duration) {
       return res.status(400).json({
-        message: "All required fields must be provided",
+        message: "Title and duration are required",
       });
     }
 
@@ -17,14 +17,12 @@ exports.createCourse = async (req, res) => {
       });
     }
 
-    // Create new course
     const course = await Course.create({
-      title,
-      description,
-      category,
-      duration,
-      level,
-      // createdBy: req.user.id,
+      title: title.trim(),
+      category: category || "",
+      duration: duration.trim(),
+      level: level || "Beginner",
+      createdBy: req.user.id,
     });
 
     res.status(201).json({

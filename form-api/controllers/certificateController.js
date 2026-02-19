@@ -35,12 +35,14 @@ const generateCertificate = async (req, res) => {
       studentName: `${student.firstname} ${student.lastname}`,
       courseName: course.title,
       certificateId,
+      courseDuration: course.duration || "",
     });
 
     const certificate = await Certificate.create({
       studentId,
       courseId,
       certificateId,
+      courseDuration: course.duration || "",
       certificateUrl: `certificates/${fileName}`,
     });
 

@@ -1,4 +1,10 @@
-module.exports = ({ studentName, courseName, certificateId, issuedDate }) => {
+module.exports = ({
+  studentName,
+  courseName,
+  certificateId,
+  issuedDate,
+  courseDuration,
+}) => {
   return `
   <!DOCTYPE html>
   <html>
@@ -106,12 +112,16 @@ module.exports = ({ studentName, courseName, certificateId, issuedDate }) => {
       <div class="course">${courseName}</div>
 
       <div class="meta">
-        Issued on ${issuedDate}
+        Issued on ${issuedDate}${
+          courseDuration ? ` • Course Period: ${courseDuration}` : ""
+        }
       </div>
 
+      <!-- Certificate ID (temporarily hidden)
       <div class="meta">
         Certificate ID: ${certificateId}
       </div>
+      -->
 
     </div>
   </body>

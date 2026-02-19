@@ -36,7 +36,7 @@ const courseSchema = new mongoose.Schema(
 
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
+      ref: "Student",
       // required: true,
     },
 
