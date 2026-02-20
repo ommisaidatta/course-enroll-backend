@@ -109,19 +109,19 @@ module.exports = ({
 
       <p>has successfully completed the course</p>
 
-      <div class="course">${courseName}</div>
+     <div class="course">${courseName}</div>
+
+      ${
+        courseDuration
+          ? `<div style="margin-top:10px; font-size:18px; color:#333;">
+              Duration: ${courseDuration}
+            </div>`
+          : ""
+      }
 
       <div class="meta">
-        Issued on ${issuedDate}${
-          courseDuration ? ` • Course Period: ${courseDuration}` : ""
-        }
+        Issued on ${issuedDate}
       </div>
-
-      <!-- Certificate ID (temporarily hidden)
-      <div class="meta">
-        Certificate ID: ${certificateId}
-      </div>
-      -->
 
     </div>
   </body>
